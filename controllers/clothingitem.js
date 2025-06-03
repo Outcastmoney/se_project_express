@@ -9,8 +9,6 @@ const {
 
 const defaultUserId = "5d8b8592978f8bd833ca8133";
 
-defaultUserId = "664e0b7e2b0b2c001f2e8b2d";
-
 const createItem = (req, res) => {
   const { name, weather, imageUrl } = req.body;
 
@@ -38,11 +36,11 @@ const getItems = (req, res) => {
     .then((items) => {
       res.status(STATUS_OK).send(items);
     })
-    .catch(() => {
-      return res
+    .catch(() =>
+      res
         .status(STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: "Error getting items" });
-    });
+        .send({ message: "Error getting items" })
+    );
 };
 
 const deleteItem = (req, res) => {
