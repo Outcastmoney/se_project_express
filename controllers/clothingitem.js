@@ -7,6 +7,8 @@ const {
   STATUS_INTERNAL_SERVER_ERROR,
 } = require("../utils/constants");
 
+const defaultUserId = "5d8b8592978f8bd833ca8133";
+
 defaultUserId = "664e0b7e2b0b2c001f2e8b2d";
 
 const createItem = (req, res) => {
@@ -24,7 +26,7 @@ const createItem = (req, res) => {
           .status(STATUS_BAD_REQUEST)
           .send({ message: "Invalid item data" });
       }
-      res
+      return res
         .status(STATUS_INTERNAL_SERVER_ERROR)
         .send({ message: "Error creating item" });
     });
@@ -37,7 +39,7 @@ const getItems = (req, res) => {
       res.status(STATUS_OK).send(items);
     })
     .catch(() => {
-      res
+      return res
         .status(STATUS_INTERNAL_SERVER_ERROR)
         .send({ message: "Error getting items" });
     });
@@ -60,13 +62,12 @@ const deleteItem = (req, res) => {
           .status(STATUS_BAD_REQUEST)
           .send({ message: "Invalid item ID" });
       }
-      res
+      return res
         .status(STATUS_INTERNAL_SERVER_ERROR)
         .send({ message: "Error deleting item" });
     });
 };
 
-// Add Like
 const addLike = (req, res) => {
   const { itemId } = req.params;
   const userId = req.user && req.user._id ? req.user._id : defaultUserId;
@@ -85,7 +86,7 @@ const addLike = (req, res) => {
           .status(STATUS_BAD_REQUEST)
           .send({ message: "Invalid item ID" });
       }
-      res
+      return res
         .status(STATUS_INTERNAL_SERVER_ERROR)
         .send({ message: "Error adding like" });
     });
@@ -110,7 +111,7 @@ const removeLike = (req, res) => {
           .status(STATUS_BAD_REQUEST)
           .send({ message: "Invalid item ID" });
       }
-      res
+      return res
         .status(STATUS_INTERNAL_SERVER_ERROR)
         .send({ message: "Error removing like" });
     });

@@ -1,4 +1,3 @@
-const _id = "";
 
 module.exports = {
   env: {
