@@ -87,7 +87,7 @@ const deleteItem = (req, res) => {
 
 const addLike = (req, res) => {
   const { itemId } = req.params;
-  const userId = req.user._id; // auth middleware ensures req.user exists
+  const userId = req.user._id;
   clothingitem
     .findByIdAndUpdate(itemId, { $addToSet: { likes: userId } }, { new: true })
     .orFail()
@@ -112,7 +112,7 @@ const addLike = (req, res) => {
 
 const removeLike = (req, res) => {
   const { itemId } = req.params;
-  const userId = req.user._id; // auth middleware ensures req.user exists
+  const userId = req.user._id;
   clothingitem
     .findByIdAndUpdate(itemId, { $pull: { likes: userId } }, { new: true })
     .orFail()
