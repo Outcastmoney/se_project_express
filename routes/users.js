@@ -1,12 +1,12 @@
 const router = require("express").Router();
 const { getCurrentUser, updateUserProfile } = require("../controllers/users");
+const User = require("../models/user");
 
-router.get("/", (req, res) => {
-  const User = require("../models/user");
-  return User.find({})
+router.get("/", (req, res) => 
+  User.find({})
     .then((users) => res.status(200).send(users))
-    .catch((err) => res.status(500).send({ message: err.message }));
-});
+    .catch((err) => res.status(500).send({ message: err.message }))
+);
 
 router.get("/me", getCurrentUser);
 router.patch("/me", updateUserProfile);
@@ -17,7 +17,6 @@ router.get("/:userId", (req, res) => {
     return res.status(400).send({ message: "Invalid user ID" });
   }
   
-  const User = require("../models/user");
   return User.findById(userId)
     .then((user) => {
       if (!user) {
