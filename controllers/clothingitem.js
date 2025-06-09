@@ -11,12 +11,10 @@ const {
 
 const createItem = (req, res) => {
   const { name, weather, imageUrl } = req.body;
-  
+
   if (!name || !weather || !imageUrl) {
     return res.status(STATUS_BAD_REQUEST).send({ message: "Invalid item data" });
   }
-  
-  const ownerId = req.user ? req.user._id : "68465b81289365ac369458bf";
 
   return clothingitem
     .create({ name, weather, imageUrl, owner: ownerId })
