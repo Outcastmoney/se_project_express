@@ -144,16 +144,16 @@ const updateUserProfile = (req, res) => {
     });
 };
 
-const getUsers = (req, res) => {
-  return User.find({})
-    .then((users) => res.status(STATUS_OK).send(users))
-    .catch((err) => {
+const getUsers = (req, res) => 
+  User.find({})
+    .then(users => res.status(STATUS_OK).send(users))
+    .catch(err => {
       console.error(err);
       return res
         .status(STATUS_INTERNAL_SERVER_ERROR)
         .send({ message: "An error has occurred on the server." });
     });
-};
+
 
 const getUserById = (req, res) => {
   const { userId } = req.params;
