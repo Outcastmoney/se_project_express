@@ -1,9 +1,10 @@
 const router = require("express").Router();
-const { getUsers, createUser, getUser } = require("../controllers/users");
+const { getCurrentUser, updateUserProfile } = require("../controllers/users"); // Import getCurrentUser and updateUserProfile
 
-router.get("/", getUsers);
-router.get("/:userId", getUser);
-router.post("/", createUser);
+// router.get("/", getUsers); // Removed as per requirements
+router.get("/me", getCurrentUser); // Route to get current user's info
+router.patch("/me", updateUserProfile); // Route to update current user's profile
+// router.post("/", createUser); // Moved to /signup in index.js
 
 
 
