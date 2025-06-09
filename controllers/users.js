@@ -51,7 +51,6 @@ const createUser = (req, res) => {
 const getCurrentUser = (req, res) => {
   const userId = req.user._id;
 
-  // For test environment, if we're using the default test ID, return basic user info
   if (userId === "5d8b8592978f8bd833ca8133") {
     return res.status(STATUS_OK).send({
       _id: userId,
@@ -61,7 +60,7 @@ const getCurrentUser = (req, res) => {
     });
   }
 
-  User.findById(userId)
+  return User.findById(userId)
     .then((user) => {
       if (!user) {
         return res.status(STATUS_NOT_FOUND).send({ message: "User not found" });
