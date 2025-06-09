@@ -144,9 +144,45 @@ const updateUserProfile = (req, res) => {
     });
 };
 
+const getUsers = (req, res) => {
+  return User.find({})
+    .then((users) => res.status(STATUS_OK).send(users))
+    .catch((err) => {
+      console.error(err);
+      return res
+        .status(STATUS_INTERNAL_SERVER_ERROR)
+        .send({ message: "An error has occurred on the server." });
+    });
+};
+
+const getUserById = (req, res) => {
+  const { userId } = req.params;
+
+  return User.findById(userId)
+    .then((user) => {
+      if (!user) {
+        return res.status(STATUS_NOT_FOUND).send({ message: "User not found" });
+      }
+      return res.status(STATUS_OK).send(user);
+    })
+    .catch((err) => {
+      console.error(err);
+      if (err.name === "CastError") {
+        return res
+          .status(STATUS_BAD_REQUEST)
+          .send({ message: "Invalid user ID" });
+      }
+      return res
+        .status(STATUS_INTERNAL_SERVER_ERROR)
+        .send({ message: "An error has occurred on the server." });
+    });
+};
+
 module.exports = {
   createUser,
   getCurrentUser,
   login,
   updateUserProfile,
+  getUsers,
+  getUserById,
 };
