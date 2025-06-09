@@ -5,8 +5,11 @@ const { createItem, getItems, deleteItem, addLike, removeLike } = require("../co
 
 router.post("/", createItem);
 router.get("/", getItems);
-router.delete("/:itemId", auth, deleteItem);
-router.put("/:itemId/likes", auth, addLike);
-router.delete("/:itemId/likes", auth, removeLike);
+
+// Apply auth middleware to protected routes
+router.use(auth);
+router.delete("/:itemId", deleteItem);
+router.put("/:itemId/likes", addLike);
+router.delete("/:itemId/likes", removeLike);
 
 module.exports = router;
