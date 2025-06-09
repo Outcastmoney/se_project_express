@@ -17,37 +17,63 @@ const {
 const createUser = (req, res) => {
   const { name, avatar, email, password } = req.body;
 
-  const passwordPromise = password ? bcrypt.hash(password, 10) : Promise.resolve(undefined);
+  const userData = { name, avatar }; // name and avatar are still required by schema
 
-  passwordPromise
-    .then((hashedPassword) => {
-      return User.create({ name, avatar, email, password: hashedPassword });
-    })
-    .then((user) => {
-      const userResponse = user.toObject();
-      delete userResponse.password;
-      return res.status(STATUS_CREATED).send(userResponse);
-    })
-    .catch((error) => {
-      console.error(error);
-      if (error.name === "ValidationError") {
-        const messages = Object.values(error.errors).map(err => err.message);
+  // Only add email to userData if it's provided
+  if (email !== undefined) {
+    userData.email = email;
+  }
+
+  const processUserCreation = (hashedPassword) => {
+    if (hashedPassword !== undefined) {
+      userData.password = hashedPassword;
+    }
+
+    return User.create(userData)
+      .then((user) => {
+        const userResponse = user.toObject();
+        // Ensure password is not sent back, even if it was just created (and is undefined if not provided)
+        if (userResponse.password !== undefined) {
+          delete userResponse.password;
+        }
+        return res.status(STATUS_CREATED).send(userResponse);
+      })
+      .catch((error) => {
+        console.error(error);
+        if (error.name === "ValidationError") {
+          const messages = Object.values(error.errors).map(err => err.message);
+          return res
+            .status(STATUS_BAD_REQUEST)
+            .send({ message: messages.join('. ') + (messages.length > 0 ? '.' : '') });
+        }
+        if (error.code === 11000 && email) { // Check email for 11000 only if email was part of the attempt
+          return res
+            .status(STATUS_CONFLICT)
+            .send({ message: "User with this email already exists." });
+        }
+        // This specific bcrypt error check might be less relevant if password hashing is conditional
+        // but kept for robustness if password is provided but is of an invalid type for bcrypt.
+        if (password && error.message && error.message.includes("data and salt arguments required")) {
+          return res.status(STATUS_BAD_REQUEST).send({ message: "Invalid password data for hashing." });
+        }
         return res
-          .status(STATUS_BAD_REQUEST)
-          .send({ message: messages.join('. ') + (messages.length > 0 ? '.' : '') });
-      }
-      if (error.code === 11000) {
-        return res
-          .status(STATUS_CONFLICT)
-          .send({ message: "User with this email already exists." });
-      }
-      if (password && error.type === 'TypeError' && error.message && error.message.includes("data and salt arguments required")) {
-        return res.status(STATUS_BAD_REQUEST).send({ message: "Invalid password data for hashing." });
-      }
-      return res
-        .status(STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: "An error has occurred on the server." });
-    });
+          .status(STATUS_INTERNAL_SERVER_ERROR)
+          .send({ message: "An error has occurred on the server." });
+      });
+  };
+
+  if (password) {
+    bcrypt.hash(password, 10)
+      .then(hashedPassword => processUserCreation(hashedPassword))
+      .catch(error => {
+        // Handle bcrypt hashing specific errors before attempting user creation
+        console.error("Bcrypt hashing error:", error);
+        return res.status(STATUS_BAD_REQUEST).send({ message: "Error processing password." });
+      });
+  } else {
+    // If no password provided, proceed directly to user creation without hashing
+    processUserCreation(undefined);
+  }
 };
 
 const getCurrentUser = (req, res) => {

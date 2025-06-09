@@ -16,8 +16,7 @@ const userSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: true,
-    unique: true,
+    unique: true, // Unique constraint should remain if email is provided
     validate: {
       validator(value) {
         return validator.isEmail(value);
@@ -27,8 +26,7 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
-    minlength: 8,
+    minlength: 8, // Minlength validation applies if password is provided
     select: false,
   },
 });
