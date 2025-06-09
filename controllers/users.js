@@ -8,7 +8,6 @@ const {
   STATUS_BAD_REQUEST,
   STATUS_UNAUTHORIZED,
   STATUS_NOT_FOUND,
-  STATUS_CONFLICT,
   STATUS_INTERNAL_SERVER_ERROR,
 } = require("../utils/constants");
 
@@ -92,9 +91,7 @@ const login = (req, res) => {
         }
         return generateToken(user);
       })
-      .catch((err) => {
-        return res.status(STATUS_UNAUTHORIZED).send({ message: err.message });
-      });
+      .catch((err) => res.status(STATUS_UNAUTHORIZED).send({ message: err.message }));
   }
 
   return User.findUserByCredentials(email, password)
