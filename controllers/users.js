@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { JWT_SECRET } = require("../utils/config");
 const User = require("../models/user");
+const { JWT_SECRET } = require("../utils/config");
 const {
   STATUS_OK,
   STATUS_CREATED,
@@ -16,8 +16,11 @@ const {
 
 const createUser = (req, res) => {
   const { name, avatar, email, password } = req.body;
-  if (!password) {
-    User.create({ name, avatar })
+  const userData = { name, avatar };
+  if (email) userData.email = email;
+  
+  const createUserAndRespond = (data) => {
+    User.create(data)
       .then((user) => {
         res.status(STATUS_CREATED).send({
           name: user.name,
@@ -32,23 +35,17 @@ const createUser = (req, res) => {
         return res.status(STATUS_INTERNAL_SERVER_ERROR)
           .send({ message: "An error has occurred on the server." });
       });
-  } else {
+  };
+
+  if (password) {
     bcrypt.hash(password, 10)
-      .then((hash) => User.create({ name, avatar, email, password: hash }))
-      .then((user) => {
-        res.status(STATUS_CREATED).send({
-          name: user.name,
-          avatar: user.avatar,
-          _id: user._id
-        });
+      .then((hash) => {
+        userData.password = hash;
+        createUserAndRespond(userData);
       })
-      .catch((err) => {
-        if (err.name === "ValidationError") {
-          return res.status(STATUS_BAD_REQUEST).send({ message: Object.values(err.errors).map(error => error.message).join('. ') });
-        }
-        return res.status(STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: "An error has occurred on the server." });
-      });
+      .catch(() => res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: "Error hashing password" }));
+  } else {
+    createUserAndRespond(userData);
   }
 };
 
@@ -76,38 +73,32 @@ const getCurrentUser = (req, res) => {
 };
 
 const login = (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, name } = req.body;
 
-  if (!email || !password) {
-    const { name } = req.body;
-    if (name) {
-      return User.findOne({ name })
-        .then((user) => {
-          if (!user) {
-            return res.status(STATUS_UNAUTHORIZED).send({ message: "User not found" });
-          }
-          const token = jwt.sign(
-            { _id: user._id },
-            JWT_SECRET,
-            { expiresIn: "7d" }
-          );
-          return res.status(STATUS_OK).send({ token });
-        })
-        .catch((err) => {
-          console.error(err);
-          return res.status(STATUS_UNAUTHORIZED).send({ message: err.message });
-        });
-    }
+  const generateToken = (user) => {
+    const token = jwt.sign(
+      { _id: user._id },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+    return res.status(STATUS_OK).send({ token });
+  };
+
+  if (name && (!email || !password)) {
+    return User.findOne({ name })
+      .then((user) => {
+        if (!user) {
+          return res.status(STATUS_UNAUTHORIZED).send({ message: "User not found" });
+        }
+        return generateToken(user);
+      })
+      .catch((err) => {
+        return res.status(STATUS_UNAUTHORIZED).send({ message: err.message });
+      });
   }
+
   return User.findUserByCredentials(email, password)
-    .then((user) => {
-      const token = jwt.sign(
-        { _id: user._id },
-        JWT_SECRET,
-        { expiresIn: "7d" }
-      );
-      return res.status(STATUS_OK).send({ token });
-    })
+    .then((user) => generateToken(user))
     .catch((err) => res.status(STATUS_UNAUTHORIZED).send({ message: err.message }));
 };
 
