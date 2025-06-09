@@ -17,7 +17,7 @@ const createItem = (req, res) => {
   }
 
   return clothingitem
-    .create({ name, weather, imageUrl, owner: ownerId })
+    .create({ name, weather, imageUrl, owner: req.user._id })
     .then((item) => {
       res.status(STATUS_CREATED).send({ data: item });
     })
