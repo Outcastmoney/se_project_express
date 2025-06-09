@@ -2,12 +2,12 @@ const router = require("express").Router();
 const clothingItem = require("./clothingitem");
 
 const usersRouter = require("./users");
-const auth = require('../middlewares/auth'); // Import auth middleware
-const { login, createUser } = require("../controllers/users"); // Import controllers for signin/signup
+const auth = require('../middlewares/auth');
+const { login, createUser } = require("../controllers/users");
 
 router.post("/signin", login);
-router.post("/signup", createUser);
-router.use("/users", auth, usersRouter); // Protect all /users routes
+router.post("/users", createUser);
+router.use("/users", auth, usersRouter);
 router.use('/items', clothingItem);
 
 const { STATUS_NOT_FOUND } = require("../utils/constants");
