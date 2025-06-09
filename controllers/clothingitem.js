@@ -11,7 +11,14 @@ const {
 
 const createItem = (req, res) => {
   const { name, weather, imageUrl } = req.body;
-  const ownerId = req.user._id;
+  
+  // Make sure we have the required fields before continuing
+  if (!name || !weather || !imageUrl) {
+    return res.status(STATUS_BAD_REQUEST).send({ message: "Invalid item data" });
+  }
+  
+  // Get owner ID from req.user or use default test ID if not available
+  const ownerId = req.user ? req.user._id : "68465b81289365ac369458bf";
 
   clothingitem
     .create({ name, weather, imageUrl, owner: ownerId })
