@@ -17,18 +17,13 @@ const {
 const createUser = (req, res) => {
   const { name, avatar, email, password } = req.body;
 
-  if (!email || !password) {
-    return res
-      .status(STATUS_BAD_REQUEST)
-      .send({ message: "Email and password are required" });
-  }
+  const passwordPromise = password ? bcrypt.hash(password, 10) : Promise.resolve(undefined);
 
-  return bcrypt.hash(password, 10)
-    .then((hashedPassword) =>
-      User.create({ name, avatar, email, password: hashedPassword }),
-    )
+  passwordPromise
+    .then((hashedPassword) => {
+      return User.create({ name, avatar, email, password: hashedPassword });
+    })
     .then((user) => {
-
       const userResponse = user.toObject();
       delete userResponse.password;
       return res.status(STATUS_CREATED).send(userResponse);
@@ -36,14 +31,18 @@ const createUser = (req, res) => {
     .catch((error) => {
       console.error(error);
       if (error.name === "ValidationError") {
+        const messages = Object.values(error.errors).map(err => err.message);
         return res
           .status(STATUS_BAD_REQUEST)
-          .send({ message: "Invalid user data provided." });
+          .send({ message: messages.join('. ') + (messages.length > 0 ? '.' : '') });
       }
       if (error.code === 11000) {
         return res
           .status(STATUS_CONFLICT)
           .send({ message: "User with this email already exists." });
+      }
+      if (password && error.type === 'TypeError' && error.message && error.message.includes("data and salt arguments required")) {
+        return res.status(STATUS_BAD_REQUEST).send({ message: "Invalid password data for hashing." });
       }
       return res
         .status(STATUS_INTERNAL_SERVER_ERROR)
