@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const validator = require("validator");
 const User = require("../models/user");
 const { JWT_SECRET } = require("../utils/config");
 const {
@@ -15,9 +16,29 @@ const {
 const createUser = (req, res) => {
   const { name, avatar, email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({
-      message: "Email and password are required",
+  // Validate required fields
+  if (!name) {
+    return res.status(STATUS_BAD_REQUEST).send({
+      message: "Name is required",
+    });
+  }
+
+  if (name.length < 2 || name.length > 30) {
+    return res.status(STATUS_BAD_REQUEST).send({
+      message: "Name must be between 2 and 30 characters",
+    });
+  }
+
+  if (!avatar) {
+    return res.status(STATUS_BAD_REQUEST).send({
+      message: "Avatar URL is required",
+    });
+  }
+
+  // Validate avatar URL
+  if (!validator.isURL(avatar)) {
+    return res.status(STATUS_BAD_REQUEST).send({
+      message: "Avatar URL must be valid",
     });
   }
 
