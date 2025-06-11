@@ -3,10 +3,15 @@ const clothingItem = require("./clothingitem");
 
 const usersRouter = require("./users");
 const auth = require('../middlewares/auth');
-const { login, createUser } = require("../controllers/users");
+const { login, createUser, getCurrentUser, updateUserProfile } = require("../controllers/users");
 
 router.post("/signin", login);
 router.post("/signup", createUser);
+
+router.post("/users", createUser);
+router.get("/users", getCurrentUser);
+router.get("/users/:userId", getCurrentUser);
+
 router.use("/users", auth, usersRouter);
 router.use('/items', clothingItem);
 
