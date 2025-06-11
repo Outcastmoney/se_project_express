@@ -16,7 +16,6 @@ const {
 const createUser = (req, res) => {
   const { name, avatar, email, password } = req.body;
 
-  // Validate required fields
   if (!name) {
     return res.status(STATUS_BAD_REQUEST).send({
       message: "Name is required",
@@ -35,7 +34,6 @@ const createUser = (req, res) => {
     });
   }
 
-  // Validate avatar URL
   if (!validator.isURL(avatar)) {
     return res.status(STATUS_BAD_REQUEST).send({
       message: "Avatar URL must be valid",
@@ -89,7 +87,7 @@ const createUser = (req, res) => {
 };
 
 const getCurrentUser = (req, res) => {
-  const userId = req.params.userId || (req.user && req.user._id);
+  const userId = req.user._id;
 
   if (!userId) {
     return User.find({})
