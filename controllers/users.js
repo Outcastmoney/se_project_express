@@ -14,8 +14,15 @@ const {
 
 const createUser = (req, res) => {
   const { name, avatar, email, password } = req.body;
-  const userData = { name, avatar };
-  if (email) userData.email = email;
+  
+  if (!email || !password) {
+    return res.status(400).json({
+      message: 'Email and password are required'
+    });
+  }
+
+  const userData = { name, avatar, email };
+
 
   const createUserAndRespond = (data) => {
     User.create(data)
@@ -46,20 +53,18 @@ const createUser = (req, res) => {
   };
 
   if (password) {
-    bcrypt
+    return bcrypt
       .hash(password, 10)
       .then((hash) => {
         userData.password = hash;
-        createUserAndRespond(userData);
+        return createUserAndRespond(userData);
       })
-      .catch(() =>
-        res
-          .status(STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: "Error hashing password" })
+      .catch(() => res
+        .status(STATUS_INTERNAL_SERVER_ERROR)
+        .send({ message: "Error hashing password" })
       );
-  } else {
-    createUserAndRespond(userData);
   }
+  return createUserAndRespond(userData);
 };
 
 const getCurrentUser = (req, res) => {
