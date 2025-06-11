@@ -9,6 +9,7 @@ const {
   STATUS_UNAUTHORIZED,
   STATUS_NOT_FOUND,
   STATUS_INTERNAL_SERVER_ERROR,
+  STATUS_CONFLICT,
 } = require("../utils/constants");
 
 const createUser = (req, res) => {
@@ -22,28 +23,40 @@ const createUser = (req, res) => {
         res.status(STATUS_CREATED).send({
           name: user.name,
           avatar: user.avatar,
-          _id: user._id
+          _id: user._id,
         });
       })
       .catch((err) => {
         if (err.code === 11000) {
-          return res.status(409).send({ message: 'Email already exists' });
+          return res
+            .status(STATUS_CONFLICT)
+            .send({ message: "Email already exists" });
         }
         if (err.name === "ValidationError") {
-          return res.status(STATUS_BAD_REQUEST).send({ message: Object.values(err.errors).map(error => error.message).join('. ') });
+          return res.status(STATUS_BAD_REQUEST).send({
+            message: Object.values(err.errors)
+              .map((error) => error.message)
+              .join(". "),
+          });
         }
-        return res.status(STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: "An error has occurred on the server." });
+        return res.status(STATUS_INTERNAL_SERVER_ERROR).send({
+          message: "An error has occurred on the server.",
+        });
       });
   };
 
   if (password) {
-    bcrypt.hash(password, 10)
+    bcrypt
+      .hash(password, 10)
       .then((hash) => {
         userData.password = hash;
         createUserAndRespond(userData);
       })
-      .catch(() => res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: "Error hashing password" }));
+      .catch(() =>
+        res
+          .status(STATUS_INTERNAL_SERVER_ERROR)
+          .send({ message: "Error hashing password" })
+      );
   } else {
     createUserAndRespond(userData);
   }
@@ -51,15 +64,6 @@ const createUser = (req, res) => {
 
 const getCurrentUser = (req, res) => {
   const userId = req.user._id;
-
-  if (userId === "5d8b8592978f8bd833ca8133") {
-    return res.status(STATUS_OK).send({
-      _id: userId,
-      name: "Test User",
-      avatar: "https://example.com/avatar.jpg",
-      email: "test@example.com"
-    });
-  }
 
   return User.findById(userId)
     .then((user) => {
@@ -85,11 +89,7 @@ const login = (req, res) => {
   const { email, password } = req.body;
 
   const generateToken = (user) => {
-    const token = jwt.sign(
-      { _id: user._id },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: "7d" });
     return res.status(STATUS_OK).send({ token });
   };
 
@@ -97,9 +97,13 @@ const login = (req, res) => {
     .then((user) => generateToken(user))
     .catch((err) => {
       if (err.message === "Incorrect email or password") {
-        return res.status(STATUS_UNAUTHORIZED).send({ message: "Incorrect email or password" });
+        return res
+          .status(STATUS_UNAUTHORIZED)
+          .send({ message: "Incorrect email or password" });
       }
-      return res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: "An error has occurred on the server." });
+      return res
+        .status(STATUS_INTERNAL_SERVER_ERROR)
+        .send({ message: "An error has occurred on the server." });
     });
 };
 
@@ -112,14 +116,15 @@ const updateUserProfile = (req, res) => {
   if (avatar) updates.avatar = avatar;
 
   if (Object.keys(updates).length === 0) {
-    return res.status(STATUS_BAD_REQUEST).send({ message: 'No fields to update provided.' });
+    return res
+      .status(STATUS_BAD_REQUEST)
+      .send({ message: "No fields to update provided." });
   }
 
-  return User.findByIdAndUpdate(
-    userId,
-    updates,
-    { new: true, runValidators: true },
-  )
+  return User.findByIdAndUpdate(userId, updates, {
+    new: true,
+    runValidators: true,
+  })
     .then((user) => {
       if (!user) {
         return res.status(STATUS_NOT_FOUND).send({ message: "User not found" });
@@ -138,43 +143,9 @@ const updateUserProfile = (req, res) => {
           .status(STATUS_BAD_REQUEST)
           .send({ message: "Invalid user ID format." });
       }
-      return res
-        .status(STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: "An error has occurred on the server while updating profile." });
-    });
-};
-
-const getUsers = (req, res) => 
-  User.find({})
-    .then(users => res.status(STATUS_OK).send(users))
-    .catch(err => {
-      console.error(err);
-      return res
-        .status(STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: "An error has occurred on the server." });
-    });
-
-
-const getUserById = (req, res) => {
-  const { userId } = req.params;
-
-  return User.findById(userId)
-    .then((user) => {
-      if (!user) {
-        return res.status(STATUS_NOT_FOUND).send({ message: "User not found" });
-      }
-      return res.status(STATUS_OK).send(user);
-    })
-    .catch((err) => {
-      console.error(err);
-      if (err.name === "CastError") {
-        return res
-          .status(STATUS_BAD_REQUEST)
-          .send({ message: "Invalid user ID" });
-      }
-      return res
-        .status(STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: "An error has occurred on the server." });
+      return res.status(STATUS_INTERNAL_SERVER_ERROR).send({
+        message: "An error has occurred on the server while updating profile.",
+      });
     });
 };
 
@@ -183,6 +154,4 @@ module.exports = {
   getCurrentUser,
   login,
   updateUserProfile,
-  getUsers,
-  getUserById,
 };
