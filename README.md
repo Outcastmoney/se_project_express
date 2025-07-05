@@ -30,3 +30,21 @@ The application allows users to:
 
 ### Testing
 Before committing your code, make sure you edit the file `sprint.txt` in the root folder. The file `sprint.txt` should contain the number of the sprint you're currently working on. For ex. 12
+
+## Application Access
+
+### Backend API
+* Domain: https://api.your-domain.com
+* Server IP: [Your Server IP]
+
+### Frontend
+* Domain: https://your-domain.com
+* Frontend repository: https://github.com/Outcastmoney/se_project_react
+
+## Server Features
+* PM2 process management for automatic recovery
+* Nginx configured as reverse proxy with SSL
+* MongoDB for data persistence
+* Error logging with Winston
+* JWT-based authentication
+* Request validation with celebrate/Joi
