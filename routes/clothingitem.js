@@ -3,12 +3,13 @@ const auth = require('../middlewares/auth');
 
 const { createItem, getItems, deleteItem, addLike, removeLike } = require("../controllers/clothingitem");
 
-router.post("/", auth, createItem);
+// Public routes that don't require authentication
 router.get("/", getItems);
 
-router.use(auth);
-router.delete("/:itemId", deleteItem);
-router.put("/:itemId/likes", addLike);
-router.delete("/:itemId/likes", removeLike);
+// Protected routes that require authentication
+router.post("/", auth, createItem);
+router.delete("/:itemId", auth, deleteItem);
+router.put("/:itemId/likes", auth, addLike);
+router.delete("/:itemId/likes", auth, removeLike);
 
 module.exports = router;
