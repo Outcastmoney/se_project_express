@@ -12,36 +12,36 @@ const {
   STATUS_INTERNAL_SERVER_ERROR,
   STATUS_CONFLICT,
 } = require("../utils/constants");
-
+ 
 const createUser = (req, res) => {
   const { name, avatar, email, password } = req.body;
-
+ 
   if (!name) {
     return res.status(STATUS_BAD_REQUEST).send({
       message: "Name is required",
     });
   }
-
+ 
   if (name.length < 2 || name.length > 30) {
     return res.status(STATUS_BAD_REQUEST).send({
       message: "Name must be between 2 and 30 characters",
     });
   }
-
+ 
   if (!avatar) {
     return res.status(STATUS_BAD_REQUEST).send({
       message: "Avatar URL is required",
     });
   }
-
+ 
   if (!validator.isURL(avatar)) {
     return res.status(STATUS_BAD_REQUEST).send({
       message: "Avatar URL must be valid",
     });
   }
-
+ 
   const userData = { name, avatar, email };
-
+ 
   const createUserAndRespond = (data) => {
     User.create(data)
       .then((user) => {
@@ -69,7 +69,7 @@ const createUser = (req, res) => {
         });
       });
   };
-
+ 
   if (password) {
     return bcrypt
       .hash(password, 10)
@@ -85,10 +85,10 @@ const createUser = (req, res) => {
   }
   return createUserAndRespond(userData);
 };
-
+ 
 const getCurrentUser = (req, res) => {
   const userId = req.user._id;
-
+ 
   if (!userId) {
     return User.find({})
       .then((users) => res.status(STATUS_OK).send(users))
@@ -98,7 +98,7 @@ const getCurrentUser = (req, res) => {
           .send({ message: "An error has occurred on the server." })
       );
   }
-
+ 
   return User.findById(userId)
     .then((user) => {
       if (!user) {
@@ -117,15 +117,15 @@ const getCurrentUser = (req, res) => {
         .send({ message: "An error has occurred on the server." });
     });
 };
-
+ 
 const login = (req, res) => {
   const { email, password } = req.body;
-
+ 
   const generateToken = (user) => {
     const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: "7d" });
     return res.status(STATUS_OK).send({ token });
   };
-
+ 
   return User.findUserByCredentials(email, password)
     .then((user) => generateToken(user))
     .catch((err) => {
@@ -139,21 +139,21 @@ const login = (req, res) => {
         .send({ message: "An error has occurred on the server." });
     });
 };
-
+ 
 const updateUserProfile = (req, res) => {
   const userId = req.user._id;
   const { name, avatar } = req.body;
-
+ 
   const updates = {};
   if (name) updates.name = name;
   if (avatar) updates.avatar = avatar;
-
+ 
   if (Object.keys(updates).length === 0) {
     return res
       .status(STATUS_BAD_REQUEST)
       .send({ message: "No fields to update provided." });
   }
-
+ 
   return User.findByIdAndUpdate(userId, updates, {
     new: true,
     runValidators: true,
@@ -181,10 +181,11 @@ const updateUserProfile = (req, res) => {
       });
     });
 };
-
+ 
 module.exports = {
   createUser,
   getCurrentUser,
   login,
   updateUserProfile,
 };
+

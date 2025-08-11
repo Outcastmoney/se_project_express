@@ -7,15 +7,15 @@ const {
   STATUS_NOT_FOUND,
   STATUS_INTERNAL_SERVER_ERROR,
 } = require("../utils/constants");
-
-
+ 
+ 
 const createItem = (req, res) => {
   const { name, weather, imageUrl } = req.body;
-
+ 
   if (!name || !weather || !imageUrl) {
     return res.status(STATUS_BAD_REQUEST).send({ message: "Invalid item data" });
   }
-
+ 
   return clothingitem
     .create({ name, weather, imageUrl, owner: req.user._id })
     .then((item) => {
@@ -32,7 +32,7 @@ const createItem = (req, res) => {
         .send({ message: "Error creating item" });
     });
 };
-
+ 
 const getItems = (req, res) => {
   clothingitem
     .find({})
@@ -45,11 +45,11 @@ const getItems = (req, res) => {
         .send({ message: "Error getting items" })
     );
 };
-
+ 
 const deleteItem = (req, res) => {
   const { itemId } = req.params;
   const userId = req.user._id;
-
+ 
   clothingitem.findById(itemId)
     .orFail(() => {
       const error = new Error("Item not found");
@@ -87,7 +87,7 @@ const deleteItem = (req, res) => {
         .send({ message: "Error deleting item" });
     });
 };
-
+ 
 const addLike = (req, res) => {
   const { itemId } = req.params;
   const userId = req.user._id;
@@ -111,8 +111,8 @@ const addLike = (req, res) => {
         .send({ message: "Error adding like" });
     });
 };
-
-
+ 
+ 
 const removeLike = (req, res) => {
   const { itemId } = req.params;
   const userId = req.user._id;
@@ -136,5 +136,5 @@ const removeLike = (req, res) => {
         .send({ message: "Error removing like" });
     });
 };
-
+ 
 module.exports = { createItem, getItems, deleteItem, addLike, removeLike };
