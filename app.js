@@ -21,6 +21,16 @@ mongoose
 app.use(cors());
 app.use(express.json());
 
+// Set a default user ID only when in test mode
+if (process.env.NODE_ENV === 'test') {
+  app.use((req, res, next) => {
+    req.user = {
+      _id: "5d8b8592978f8bd833ca8133"
+    };
+    next();
+  });
+}
+
 app.use("/", mainRouter);
 
 app.listen(PORT, () => {
