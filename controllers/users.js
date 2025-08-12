@@ -13,7 +13,20 @@ const {
   STATUS_CONFLICT,
 } = require("../utils/constants");
  
+// Public: list all users
+const getUsers = (req, res) =>
+  User.find({})
+    .then((users) => res.status(STATUS_OK).send(users))
+    .catch(() =>
+      res
+        .status(STATUS_INTERNAL_SERVER_ERROR)
+        .send({ message: "An error has occurred on the server." })
+    );
+
 const createUser = (req, res) => {
+  // debug: trace POST /users handler invocation
+  // eslint-disable-next-line no-console
+  console.log('createUser called with body:', req.body);
   const { name, avatar, email, password } = req.body;
  
   if (!name) {
@@ -41,7 +54,7 @@ const createUser = (req, res) => {
   }
  
   const userData = { name, avatar, email };
- 
+
   const createUserAndRespond = (data) => {
     User.create(data)
       .then((user) => {
@@ -117,7 +130,30 @@ const getCurrentUser = (req, res) => {
         .send({ message: "An error has occurred on the server." });
     });
 };
- 
+
+// Public: get a user by id
+const getUserById = (req, res) => {
+  const { id } = req.params;
+
+  return User.findById(id)
+    .then((user) => {
+      if (!user) {
+        return res.status(STATUS_NOT_FOUND).send({ message: "User not found" });
+      }
+      return res.status(STATUS_OK).send(user);
+    })
+    .catch((error) => {
+      if (error.name === "CastError") {
+        return res
+          .status(STATUS_BAD_REQUEST)
+          .send({ message: "Invalid user ID" });
+      }
+      return res
+        .status(STATUS_INTERNAL_SERVER_ERROR)
+        .send({ message: "An error has occurred on the server." });
+    });
+};
+
 const login = (req, res) => {
   const { email, password } = req.body;
  
@@ -183,8 +219,10 @@ const updateUserProfile = (req, res) => {
 };
  
 module.exports = {
+  getUsers,
   createUser,
   getCurrentUser,
+  getUserById,
   login,
   updateUserProfile,
 };

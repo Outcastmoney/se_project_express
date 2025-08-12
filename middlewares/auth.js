@@ -3,6 +3,9 @@ const { JWT_SECRET } = require('../utils/config');
 const { STATUS_UNAUTHORIZED } = require('../utils/constants');
 
 module.exports = (req, res, next) => {
+  // debug: trace when auth runs
+  // eslint-disable-next-line no-console
+  console.log('[auth]', req.method, req.originalUrl || req.url);
   // If req.user is already set by our test middleware, we can skip token verification
   if (req.user && req.user._id) {
     return next();
