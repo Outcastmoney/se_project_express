@@ -18,8 +18,21 @@ mongoose
     console.error("Error connecting to MongoDB:", error);
   });
 
-app.use(cors());
+// Configure CORS to restrict origins in production
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? 'https://amoney.minecraftr.us' 
+    : '*',
+  credentials: true
+}));
 app.use(express.json());
+
+// Crash test route for PM2 recovery testing
+app.get('/crash-test', () => {
+  setTimeout(() => {
+    throw new Error('Server will crash now');
+  }, 0);
+});
 
 // Set a default user ID only when in test mode
 if (process.env.NODE_ENV === 'test') {

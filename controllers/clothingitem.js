@@ -8,8 +8,6 @@ const {
   STATUS_INTERNAL_SERVER_ERROR,
 } = require("../utils/constants");
 
-const getTestUserId = (req) => (req.user && req.user._id ? req.user._id : '000000000000000000000000');
-
 const createItem = (req, res) => {
   const { name, weather, imageUrl } = req.body;
 
@@ -20,9 +18,9 @@ const createItem = (req, res) => {
   }
 
   return clothingitem
-    .create({ name, weather, imageUrl, owner: getTestUserId(req) })
+    .create({ name, weather, imageUrl, owner: req.user._id })
     .then((item) => {
-      res.status(STATUS_CREATED).send(item);
+      res.status(STATUS_CREATED).send({ data: item });
     })
     .catch((err) => {
       if (err.name === "ValidationError") {
@@ -51,7 +49,7 @@ const getItems = (req, res) => {
 
 const deleteItem = (req, res) => {
   const { itemId } = req.params;
-  const userId = getTestUserId(req);
+  const userId = req.user._id;
 
   clothingitem
     .findById(itemId)
@@ -72,7 +70,7 @@ const deleteItem = (req, res) => {
       return clothingitem.findByIdAndDelete(itemId).orFail();
     })
     .then((deletedItem) => {
-      res.status(STATUS_OK).send(deletedItem);
+      res.status(STATUS_OK).send({ data: deletedItem });
     })
     .catch((err) => {
       if (
@@ -100,11 +98,13 @@ const deleteItem = (req, res) => {
 
 const addLike = (req, res) => {
   const { itemId } = req.params;
-  const userId = getTestUserId(req);
+  const userId = req.user._id;
   clothingitem
     .findByIdAndUpdate(itemId, { $addToSet: { likes: userId } }, { new: true })
     .orFail()
-    .then((item) => res.status(STATUS_OK).send(item))
+    .then((item) => {
+      res.status(STATUS_OK).send({ data: item });
+    })
     .catch((err) => {
       if (err.name === "DocumentNotFoundError") {
         return res.status(STATUS_NOT_FOUND).send({ message: "Item not found" });
@@ -122,11 +122,13 @@ const addLike = (req, res) => {
 
 const removeLike = (req, res) => {
   const { itemId } = req.params;
-  const userId = getTestUserId(req);
+  const userId = req.user._id;
   clothingitem
     .findByIdAndUpdate(itemId, { $pull: { likes: userId } }, { new: true })
     .orFail()
-    .then((item) => res.status(STATUS_OK).send(item))
+    .then((item) => {
+      res.status(STATUS_OK).send({ data: item });
+    })
     .catch((err) => {
       if (err.name === "DocumentNotFoundError") {
         return res.status(STATUS_NOT_FOUND).send({ message: "Item not found" });

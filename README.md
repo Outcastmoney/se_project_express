@@ -34,11 +34,10 @@ Before committing your code, make sure you edit the file `sprint.txt` in the roo
 ## Application Access
 
 ### Backend API
-* Domain: https://api.your-domain.com
-* Server IP: [Your Server IP]
+* Domain: https://api.amoney.minecraftr.us
 
 ### Frontend
-* Domain: https://your-domain.com
+* Domain: https://amoney.minecraftr.us or https://www.amoney.minecraftr.us
 * Frontend repository: https://github.com/Outcastmoney/se_project_react
 
 ## Server Features
