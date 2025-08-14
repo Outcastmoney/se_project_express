@@ -7,7 +7,7 @@
     "lint": "npx eslint .",
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "deploy": "git push && pm2 restart app"
+    "deploy": "git push && (pm2 describe app > /dev/null && pm2 restart app || pm2 start app.js --name app)"
   },
   "repository": {
     "type": "git",
