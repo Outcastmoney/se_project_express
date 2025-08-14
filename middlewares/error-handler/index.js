@@ -1,6 +1,5 @@
 const { CustomError } = require('../../errors');
 
-// eslint-disable-next-line no-unused-vars
 const errorHandler = (err, req, res, next) => {
   // Log the error for debugging purposes
   console.error(err);
@@ -34,8 +33,9 @@ const errorHandler = (err, req, res, next) => {
   }
 
   // Default to 500 internal server error for unhandled errors
-  return res.status(500).send({
-    message: 'Internal server error',
+  const { statusCode = 500 } = err;
+  return res.status(statusCode).send({
+    message: statusCode === 500 ? 'An error occurred on the server' : err.message,
   });
 };
 

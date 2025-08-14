@@ -3,41 +3,34 @@ const jwt = require("jsonwebtoken");
 const validator = require("validator");
 const User = require("../models/user");
 const { JWT_SECRET } = require("../utils/config");
-const {
+const { 
+  BadRequestError, 
+  NotFoundError, 
+  ConflictError,
+  UnauthorizedError 
+} = require("../errors");
+const { 
   STATUS_OK,
-  STATUS_CREATED,
-  STATUS_BAD_REQUEST,
-  STATUS_UNAUTHORIZED,
-  STATUS_NOT_FOUND,
-  STATUS_INTERNAL_SERVER_ERROR,
-  STATUS_CONFLICT,
+  STATUS_CREATED 
 } = require("../utils/constants");
 
-const createUser = (req, res) => {
+const createUser = (req, res, next) => {
   const { name, avatar, email, password } = req.body;
 
   if (!name) {
-    return res.status(STATUS_BAD_REQUEST).send({
-      message: "Name is required",
-    });
+    return next(new BadRequestError("Name is required"));
   }
 
   if (name.length < 2 || name.length > 30) {
-    return res.status(STATUS_BAD_REQUEST).send({
-      message: "Name must be between 2 and 30 characters",
-    });
+    return next(new BadRequestError("Name must be between 2 and 30 characters"));
   }
 
   if (!avatar) {
-    return res.status(STATUS_BAD_REQUEST).send({
-      message: "Avatar URL is required",
-    });
+    return next(new BadRequestError("Avatar URL is required"));
   }
 
   if (!validator.isURL(avatar)) {
-    return res.status(STATUS_BAD_REQUEST).send({
-      message: "Avatar URL must be valid",
-    });
+    return next(new BadRequestError("Avatar URL must be valid"));
   }
 
   const userData = { name, avatar, email };
@@ -53,20 +46,14 @@ const createUser = (req, res) => {
       })
       .catch((err) => {
         if (err.code === 11000) {
-          return res
-            .status(STATUS_CONFLICT)
-            .send({ message: "Email already exists" });
+          return next(new ConflictError("Email already exists"));
         }
         if (err.name === "ValidationError") {
-          return res.status(STATUS_BAD_REQUEST).send({
-            message: Object.values(err.errors)
-              .map((error) => error.message)
-              .join(". "),
-          });
+          return next(new BadRequestError(Object.values(err.errors)
+            .map((error) => error.message)
+            .join(". ")));
         }
-        return res.status(STATUS_INTERNAL_SERVER_ERROR).send({
-          message: "An error has occurred on the server.",
-        });
+        return next(err);
       });
   };
 
@@ -77,48 +64,36 @@ const createUser = (req, res) => {
         userData.password = hash;
         return createUserAndRespond(userData);
       })
-      .catch(() =>
-        res
-          .status(STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: "Error hashing password" })
-      );
+      .catch((err) => next(err));
   }
   return createUserAndRespond(userData);
 };
 
-const getCurrentUser = (req, res) => {
+const getCurrentUser = (req, res, next) => {
   const userId = req.user._id;
 
   if (!userId) {
     return User.find({})
       .then((users) => res.status(STATUS_OK).send(users))
-      .catch(() =>
-        res
-          .status(STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: "An error has occurred on the server." })
-      );
+      .catch((err) => next(err));
   }
 
   return User.findById(userId)
     .then((user) => {
       if (!user) {
-        return res.status(STATUS_NOT_FOUND).send({ message: "User not found" });
+        return next(new NotFoundError("User not found"));
       }
       return res.status(STATUS_OK).send(user);
     })
     .catch((error) => {
       if (error.name === "CastError") {
-        return res
-          .status(STATUS_BAD_REQUEST)
-          .send({ message: "Invalid user ID" });
+        return next(new BadRequestError("Invalid user ID"));
       }
-      return res
-        .status(STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: "An error has occurred on the server." });
+      return next(error);
     });
 };
 
-const login = (req, res) => {
+const login = (req, res, next) => {
   const { email, password } = req.body;
 
   const generateToken = (user) => {
@@ -130,17 +105,13 @@ const login = (req, res) => {
     .then((user) => generateToken(user))
     .catch((err) => {
       if (err.message === "Incorrect email or password") {
-        return res
-          .status(STATUS_UNAUTHORIZED)
-          .send({ message: "Incorrect email or password" });
+        return next(new UnauthorizedError("Incorrect email or password"));
       }
-      return res
-        .status(STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: "An error has occurred on the server." });
+      return next(err);
     });
 };
 
-const updateUserProfile = (req, res) => {
+const updateUserProfile = (req, res, next) => {
   const userId = req.user._id;
   const { name, avatar } = req.body;
 
@@ -149,9 +120,7 @@ const updateUserProfile = (req, res) => {
   if (avatar) updates.avatar = avatar;
 
   if (Object.keys(updates).length === 0) {
-    return res
-      .status(STATUS_BAD_REQUEST)
-      .send({ message: "No fields to update provided." });
+    return next(new BadRequestError("No fields to update provided."));
   }
 
   return User.findByIdAndUpdate(userId, updates, {
@@ -160,25 +129,18 @@ const updateUserProfile = (req, res) => {
   })
     .then((user) => {
       if (!user) {
-        return res.status(STATUS_NOT_FOUND).send({ message: "User not found" });
+        return next(new NotFoundError("User not found"));
       }
       return res.status(STATUS_OK).send(user);
     })
     .catch((error) => {
-      console.error(error);
       if (error.name === "ValidationError") {
-        return res
-          .status(STATUS_BAD_REQUEST)
-          .send({ message: "Invalid data provided for update." });
+        return next(new BadRequestError("Invalid data provided for update."));
       }
       if (error.name === "CastError") {
-        return res
-          .status(STATUS_BAD_REQUEST)
-          .send({ message: "Invalid user ID format." });
+        return next(new BadRequestError("Invalid user ID format."));
       }
-      return res.status(STATUS_INTERNAL_SERVER_ERROR).send({
-        message: "An error has occurred on the server while updating profile.",
-      });
+      return next(error);
     });
 };
 
