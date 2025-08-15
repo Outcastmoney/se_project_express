@@ -38,10 +38,10 @@ mongoose
     logger.error("Error connecting to MongoDB:", error);
   });
 
-// Configure CORS to restrict origins in production
+// Configure CORS to allow both www and non-www domains in production
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? 'https://amoney.minecraftr.us' 
+    ? ['https://amoney.minecraftr.us', 'https://www.amoney.minecraftr.us']
     : '*',
   credentials: true
 }));
