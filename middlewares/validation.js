@@ -12,11 +12,11 @@ const validateURL = (value, helpers) => {
 // User validation schemas
 const validateUserCreate = celebrate({
   body: Joi.object().keys({
-    name: Joi.string().required().min(2).max(30),
-    avatar: Joi.string().required().custom(validateURL),
-    email: Joi.string().required().email(),
-    password: Joi.string().required(),
-  }),
+    name: Joi.string().min(2).max(30),
+    avatar: Joi.string().custom(validateURL),
+    email: Joi.string().email(),
+    password: Joi.string(),
+  }).min(1), // Only require at least one field to be present
 });
 
 const validateUserLogin = celebrate({

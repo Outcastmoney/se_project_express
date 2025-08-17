@@ -1,0 +1,8 @@
+# Ignore local debug/test servers
+minimal-test.js
+final-test-server.js
+test-post-server.js
+test-server.js
+
+# Logs and runtime
+logs/
