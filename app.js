@@ -6,10 +6,13 @@ const cors = require("cors");
 const { errors } = require('celebrate');
 const winston = require('winston');
 
-const mainRouter = require("./routes/index");
+// Import controllers and validation directly
+const { createUser, getCurrentUser, login } = require('./controllers/users');
+const { validateUserCreate, validateUserLogin } = require('./middlewares/validation');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const errorHandler = require('./middlewares/error-handler');
 
+// Initialize Express app
 const app = express();
 const { PORT = 3001 } = process.env;
 
@@ -29,6 +32,7 @@ if (process.env.NODE_ENV !== 'production') {
   }));
 }
 
+// Connect to MongoDB
 mongoose
   .connect("mongodb://127.0.0.1:27017/wtwr_db")
   .then(() => {
@@ -38,26 +42,23 @@ mongoose
     logger.error("Error connecting to MongoDB:", error);
   });
 
-// Configure CORS to allow both www and non-www domains in production
+// Essential middleware
+// CORS configuration
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://amoney.minecraftr.us', 'https://www.amoney.minecraftr.us']
     : '*',
   credentials: true
 }));
-app.use(express.json());
 
-// Add request logger
+// Body parsing middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Request logger middleware
 app.use(requestLogger);
 
-// Crash test route for PM2 recovery testing
-app.get('/crash-test', () => {
-  setTimeout(() => {
-    throw new Error('Server will crash now');
-  }, 0);
-});
-
-// Set a default user ID only when in test mode
+// Test mode user ID middleware
 if (process.env.NODE_ENV === 'test') {
   app.use((req, res, next) => {
     req.user = {
@@ -67,17 +68,53 @@ if (process.env.NODE_ENV === 'test') {
   });
 }
 
-app.use("/", mainRouter);
+// ==========================================
+// DIRECT ROUTE DEFINITIONS - for test routes and critical paths
+// ==========================================
 
-// Add error logger
+// Crash test route
+app.get('/crash-test', (req, res) => {
+  setTimeout(() => {
+    throw new Error('Server will crash now');
+  }, 0);
+});
+
+// Test route for basic connectivity
+app.get('/test-route', (req, res) => {
+  console.log('Test route accessed');
+  res.status(200).json({ message: 'Test route works!' });
+});
+
+// Basic auth routes directly in app.js (bypassing router)
+app.post('/signin', validateUserLogin, login);
+app.post('/signup', validateUserCreate, createUser);
+
+// Direct user creation route
+app.post('/users', validateUserCreate, createUser);
+app.get('/users', getCurrentUser);
+
+// ==========================================
+// MAIN ROUTER MOUNTING - for other routes
+// ==========================================
+
+// Import router after direct routes are defined
+const mainRouter = require('./routes/index');
+app.use('/', mainRouter);
+
+// ==========================================
+// ERROR HANDLING
+// ==========================================
+
+// Error logger middleware
 app.use(errorLogger);
 
-// Add celebrate errors handler
+// Celebrate error handler middleware
 app.use(errors());
 
-// Add central error handler
+// Central error handler middleware
 app.use(errorHandler);
 
+// Start the server
 app.listen(PORT, () => {
   logger.info(`Server is running on port ${PORT}`);
 });

@@ -71,27 +71,44 @@ const createUser = (req, res, next) => {
 };
 
 const getCurrentUser = (req, res, next) => {
-  const userId = req.user._id;
-
-  if (!userId) {
-    return User.find({})
-      .then((users) => res.status(STATUS_OK).send(users))
-      .catch((err) => next(err));
+  // If it's a request for a specific user by ID
+  if (req.params.id) {
+    return User.findById(req.params.id)
+      .then((user) => {
+        if (!user) {
+          return next(new NotFoundError("User not found"));
+        }
+        return res.status(STATUS_OK).send(user);
+      })
+      .catch((error) => {
+        if (error.name === "CastError") {
+          return next(new BadRequestError("Invalid user ID"));
+        }
+        return next(error);
+      });
+  }
+  
+  // If authenticated request for current user
+  if (req.user && req.user._id) {
+    return User.findById(req.user._id)
+      .then((user) => {
+        if (!user) {
+          return next(new NotFoundError("User not found"));
+        }
+        return res.status(STATUS_OK).send(user);
+      })
+      .catch((error) => {
+        if (error.name === "CastError") {
+          return next(new BadRequestError("Invalid user ID"));
+        }
+        return next(error);
+      });
   }
 
-  return User.findById(userId)
-    .then((user) => {
-      if (!user) {
-        return next(new NotFoundError("User not found"));
-      }
-      return res.status(STATUS_OK).send(user);
-    })
-    .catch((error) => {
-      if (error.name === "CastError") {
-        return next(new BadRequestError("Invalid user ID"));
-      }
-      return next(error);
-    });
+  // List all users
+  return User.find({})
+    .then((users) => res.status(STATUS_OK).send(users))
+    .catch((err) => next(err));
 };
 
 const login = (req, res, next) => {
