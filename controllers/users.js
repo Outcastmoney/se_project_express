@@ -41,6 +41,7 @@ const createUser = (req, res, next) => {
         res.status(STATUS_CREATED).send({
           name: user.name,
           avatar: user.avatar,
+          email: user.email,
           _id: user._id,
         });
       })
