@@ -3,8 +3,33 @@ const validator = require('validator');
 
 // URL validation helper function
 const validateURL = (value, helpers) => {
-  if (validator.isURL(value)) {
-    return value;
+  if (validator.isURL(value, {
+    protocols: ['http', 'https'],
+    require_protocol: true,
+    require_host: true,
+    require_valid_protocol: true,
+    allow_underscores: false,
+    host_whitelist: false,
+    host_blacklist: false,
+    allow_trailing_dot: false,
+    allow_protocol_relative_urls: false,
+    disallow_auth: false
+  })) {
+    // Additional check for proper domain format
+    try {
+      const url = new URL(value);
+      // Check if hostname has at least one dot (indicating a proper domain)
+      if (url.hostname.includes('.') && url.hostname.split('.').length >= 2) {
+        // Check that the TLD is at least 2 characters
+        const parts = url.hostname.split('.');
+        const tld = parts[parts.length - 1];
+        if (tld.length >= 2) {
+          return value;
+        }
+      }
+    } catch (error) {
+      // URL constructor failed, invalid URL
+    }
   }
   return helpers.error('string.uri');
 };
