@@ -27,7 +27,6 @@ router.use("/items", clothingItem);
 
 // Final test route to verify router functionality
 router.post('/final-test', (req, res) => {
-  console.log('Final test route in router hit with body:', req.body);
   res.status(200).json({
     message: 'Router final test route works!',
     receivedData: req.body

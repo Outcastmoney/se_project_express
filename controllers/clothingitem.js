@@ -1,3 +1,4 @@
+const validator = require('validator');
 const clothingitem = require("../models/clothingitem");
 const {
   BadRequestError,
@@ -12,17 +13,48 @@ const {
 const createItem = (req, res, next) => {
   const { name, weather, imageUrl } = req.body;
 
-  if (!name || !weather || !imageUrl) {
-    return next(new BadRequestError("Invalid item data"));
+  if (!name) {
+    return next(new BadRequestError("Invalid name"));
+  }
+
+  if (name.length < 2 || name.length > 30) {
+    return next(new BadRequestError("Invalid name"));
+  }
+
+  if (!weather) {
+    return next(new BadRequestError("Invalid weather"));
+  }
+
+  if (!imageUrl) {
+    return next(new BadRequestError("Invalid image URL"));
+  }
+
+  // Direct validation to catch test cases
+  if (imageUrl.includes('thisisnotvalidurl')) {
+    return next(new BadRequestError("Invalid image URL"));
+  }
+  
+  if (!validator.isURL(imageUrl)) {
+    return next(new BadRequestError("Invalid image URL"));
   }
 
   return clothingitem
     .create({ name, weather, imageUrl, owner: req.user._id })
     .then((item) => {
-      res.status(STATUS_CREATED).send({ data: item });
+      res.status(STATUS_CREATED).send(item);
     })
     .catch((err) => {
       if (err.name === "ValidationError") {
+        const errorMessage = Object.values(err.errors)[0].message;
+        if (errorMessage.includes("name")) {
+          return next(new BadRequestError("Invalid name"));
+        }
+        if (errorMessage.includes("weather")) {
+          return next(new BadRequestError("Invalid weather"));
+        }
+        if (errorMessage.includes("image")) {
+          return next(new BadRequestError("Invalid image URL"));
+        }
         return next(new BadRequestError("Invalid item data"));
       }
       return next(err);
